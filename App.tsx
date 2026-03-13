@@ -15,6 +15,11 @@ const App: React.FC = () => {
   const [debugData, setDebugData] = useState<DebugData | null>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [starCount, setStarCount] = useState<number | null>(null);
+  
+  // Grid size configuration
+  const [useAutoGrid, setUseAutoGrid] = useState<boolean>(true);
+  const [gridWidth, setGridWidth] = useState<number>(16);
+  const [gridHeight, setGridHeight] = useState<number>(16);
 
   // Pan states
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -113,7 +118,10 @@ const App: React.FC = () => {
       }
 
       const inputNd = createNdArray(data, [h, w, 4]);
-      const result = getPerfectPixel(inputNd, { sampleMethod: samplingMethod });
+      const result = getPerfectPixel(inputNd, { 
+        sampleMethod: samplingMethod,
+        gridSize: useAutoGrid ? null : [gridWidth, gridHeight]
+      });
 
       setDebugData(result.debugData || null);
 
@@ -305,6 +313,57 @@ const App: React.FC = () => {
                 <option value="majority">Majority Cluster</option>
               </select>
             </div>
+            
+            {/* Grid Size Configuration */}
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-medium text-slate-700">Grid Size (像素颗粒度):</label>
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="checkbox" 
+                    id="autoGrid" 
+                    checked={useAutoGrid}
+                    onChange={(e) => setUseAutoGrid(e.target.checked)}
+                    className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                  />
+                  <label htmlFor="autoGrid" className="text-sm text-slate-600 cursor-pointer">自动检测</label>
+                </div>
+              </div>
+              
+              {!useAutoGrid && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-slate-500 block mb-1">宽度 (Width)</label>
+                    <input 
+                      type="number" 
+                      min="2" 
+                      max="128"
+                      value={gridWidth}
+                      onChange={(e) => setGridWidth(Math.max(2, Math.min(128, parseInt(e.target.value) || 16)))}
+                      className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-500 block mb-1">高度 (Height)</label>
+                    <input 
+                      type="number" 
+                      min="2" 
+                      max="128"
+                      value={gridHeight}
+                      onChange={(e) => setGridHeight(Math.max(2, Math.min(128, parseInt(e.target.value) || 16)))}
+                      className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {useAutoGrid && (
+                <p className="text-xs text-slate-500 mt-2">
+                  自动检测网格大小。关闭后可手动设置像素颗粒度，数值越小图片越精细。
+                </p>
+              )}
+            </div>
+            
             <button onClick={processImage} disabled={!image || isProcessing} className={`w-full py-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-center ${!image || isProcessing ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200 active:scale-[0.98]'}`}>
               {isProcessing ? 'Analyzing Grid...' : 'Generate Scaled Image'}
             </button>
